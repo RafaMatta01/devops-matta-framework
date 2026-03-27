@@ -1,0 +1,757 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DevOps na AWS com Kubernetes — Framework de Referência</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background: #f8f7f4;
+    color: #1a1a18;
+    line-height: 1.6;
+  }
+
+  .page {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 32px 24px 64px;
+  }
+
+  /* HEADER */
+  .header {
+    text-align: center;
+    padding: 36px 28px 28px;
+    border-radius: 16px;
+    background: #ffffff;
+    border: 1px solid #e4e2db;
+    margin-bottom: 28px;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+  }
+  .badge-header {
+    display: inline-block;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    padding: 4px 14px;
+    border-radius: 20px;
+    background: #E6F1FB;
+    color: #0C447C;
+    margin-bottom: 12px;
+  }
+  .header h1 {
+    font-size: 28px;
+    font-weight: 600;
+    line-height: 1.3;
+    margin-bottom: 8px;
+    color: #1a1a18;
+  }
+  .header h1 span { color: #185FA5; }
+  .header p {
+    font-size: 14px;
+    color: #5f5e5a;
+    max-width: 580px;
+    margin: 0 auto;
+    line-height: 1.7;
+  }
+  .header .meta {
+    margin-top: 16px;
+    font-size: 12px;
+    color: #888780;
+  }
+  .header .meta a { color: #185FA5; text-decoration: none; }
+  .header .meta a:hover { text-decoration: underline; }
+
+  /* SECTION TITLE */
+  .section-title {
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: .09em;
+    color: #888780;
+    margin: 28px 0 12px;
+    padding-left: 2px;
+  }
+
+  /* GITHUB BANNER */
+  .github-banner {
+    background: #EAF3DE;
+    border: 1px solid #C0DD97;
+    border-radius: 12px;
+    padding: 16px 20px;
+    margin-bottom: 8px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+  }
+  .github-banner .icon { font-size: 24px; }
+  .github-banner h4 { font-size: 13px; font-weight: 600; color: #27500A; margin-bottom: 3px; }
+  .github-banner p  { font-size: 12px; color: #3B6D11; line-height: 1.5; }
+  .github-banner code {
+    background: #C0DD97;
+    padding: 1px 7px;
+    border-radius: 4px;
+    font-family: 'SF Mono', 'Fira Code', monospace;
+    font-size: 11px;
+    color: #173404;
+  }
+
+  /* PILLARS */
+  .pillars { display: grid; grid-template-columns: repeat(4,1fr); gap: 12px; }
+  @media(max-width:680px){ .pillars { grid-template-columns: 1fr 1fr; } }
+  .pillar { border-radius: 12px; padding: 16px 14px; border: 1px solid; }
+  .pillar h3 { font-size: 13px; font-weight: 600; margin-bottom: 6px; }
+  .pillar p  { font-size: 12px; color: #5f5e5a; line-height: 1.5; }
+  .p1{background:#E6F1FB;border-color:#B5D4F4;} .p1 h3{color:#0C447C;}
+  .p2{background:#EAF3DE;border-color:#C0DD97;} .p2 h3{color:#27500A;}
+  .p3{background:#FAEEDA;border-color:#FAC775;} .p3 h3{color:#633806;}
+  .p4{background:#EEEDFE;border-color:#CECBF6;} .p4 h3{color:#3C3489;}
+
+  /* TERMINAL */
+  .term {
+    background: #0d1117;
+    border-radius: 10px;
+    padding: 14px 16px;
+    margin-top: 12px;
+    font-family: 'SF Mono', 'Fira Code', 'Consolas', monospace;
+    font-size: 12px;
+    line-height: 2;
+    overflow-x: auto;
+    border: 1px solid #21262d;
+  }
+  .prompt { color: #3fb950; user-select: none; }
+  .cmd    { color: #e6edf3; }
+  .flag   { color: #d29922; }
+  .val    { color: #79c0ff; }
+  .comment{ color: #484f58; font-style: italic; }
+  .out    { color: #6e7681; }
+
+  /* CARDS */
+  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .grid3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; }
+  @media(max-width:680px){ .grid2,.grid3 { grid-template-columns: 1fr; } }
+
+  .card {
+    border-radius: 12px;
+    padding: 16px;
+    border: 1px solid #e4e2db;
+    background: #ffffff;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+  }
+  .card h4 { font-size: 13px; font-weight: 600; margin-bottom: 4px; color: #1a1a18; }
+  .card p  { font-size: 12px; color: #5f5e5a; line-height: 1.5; }
+  .card.blue   { background:#E6F1FB; border-color:#B5D4F4; } .card.blue h4   { color:#0C447C; }
+  .card.teal   { background:#E1F5EE; border-color:#9FE1CB; } .card.teal h4   { color:#085041; }
+  .card.amber  { background:#FAEEDA; border-color:#FAC775; } .card.amber h4  { color:#633806; }
+  .card.green  { background:#EAF3DE; border-color:#C0DD97; } .card.green h4  { color:#27500A; }
+  .card.purple { background:#EEEDFE; border-color:#CECBF6; } .card.purple h4 { color:#3C3489; }
+
+  /* TOOLS CHIPS */
+  .tools-row { display: flex; flex-wrap: wrap; gap: 8px; margin: 10px 0 0; }
+  .chip {
+    font-size: 12px;
+    font-weight: 500;
+    padding: 4px 12px;
+    border-radius: 20px;
+    background: #EEEDFE;
+    color: #3C3489;
+    border: 1px solid #CECBF6;
+  }
+
+  /* PIPELINE */
+  .pipeline {
+    display: flex;
+    align-items: stretch;
+    overflow: hidden;
+    border-radius: 12px;
+    border: 1px solid #e4e2db;
+    margin-bottom: 8px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+  }
+  @media(max-width:680px){ .pipeline { flex-wrap: wrap; } }
+  .ps { flex: 1; padding: 12px 10px; text-align: center; position: relative; min-width: 80px; }
+  .ps:not(:last-child)::after {
+    content: '›';
+    position: absolute;
+    right: -9px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 18px;
+    color: #b4b2a9;
+    z-index: 2;
+  }
+  .ps h4 { font-size: 12px; font-weight: 600; margin-bottom: 3px; }
+  .ps p  { font-size: 11px; color: #5f5e5a; line-height: 1.4; }
+  .ps1{background:#E6F1FB;} .ps1 h4{color:#0C447C;}
+  .ps2{background:#EAF3DE;} .ps2 h4{color:#27500A;}
+  .ps3{background:#FAEEDA;} .ps3 h4{color:#633806;}
+  .ps4{background:#EEEDFE;} .ps4 h4{color:#3C3489;}
+  .ps5{background:#E1F5EE;} .ps5 h4{color:#085041;}
+  .ps6{background:#FAECE7;} .ps6 h4{color:#4A1B0C;}
+
+  /* AWS BOX */
+  .aws-box {
+    border: 2px solid #B5D4F4;
+    border-radius: 16px;
+    padding: 18px;
+    background: rgba(230,241,251,0.15);
+  }
+  .aws-box-title {
+    font-size: 11px;
+    font-weight: 700;
+    color: #0C447C;
+    text-transform: uppercase;
+    letter-spacing: .08em;
+    margin-bottom: 14px;
+  }
+
+  /* EKS BOX */
+  .eks-box {
+    border: 2px solid #CECBF6;
+    border-radius: 14px;
+    padding: 16px;
+    background: rgba(238,237,254,0.15);
+    margin-top: 12px;
+  }
+  .eks-box-title {
+    font-size: 11px;
+    font-weight: 700;
+    color: #3C3489;
+    text-transform: uppercase;
+    letter-spacing: .08em;
+    margin-bottom: 12px;
+  }
+
+  /* STATES */
+  .states { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  @media(max-width:580px){ .states { grid-template-columns: 1fr; } }
+  .state-box { border-radius: 12px; padding: 14px; border: 1px solid; }
+  .state-or  { background: rgba(225,245,238,0.3); border-color: #5DCAA5; }
+  .state-fl  { background: rgba(250,236,231,0.3); border-color: #F0997B; }
+  .state-title {
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .07em;
+    margin-bottom: 10px;
+  }
+  .state-or .state-title { color: #085041; }
+  .state-fl .state-title { color: #4A1B0C; }
+  .pod { border-radius: 8px; padding: 8px 12px; font-size: 12px; font-weight: 600; margin-bottom: 6px; }
+  .pod span { font-size: 11px; font-weight: 400; color: #5f5e5a; display: block; margin-top: 2px; }
+  .pod-ng-or { background: #E1F5EE; color: #085041; }
+  .pod-ap-or { background: rgba(159,225,203,0.3); color: #085041; border: 1px solid #5DCAA5; }
+  .pod-ng-fl { background: #FAECE7; color: #4A1B0C; }
+  .pod-ap-fl { background: rgba(245,196,179,0.3); color: #4A1B0C; border: 1px solid #F0997B; }
+  .pod-data  {
+    background: #f8f7f4;
+    border: 1px dashed #b4b2a9;
+    color: #5f5e5a;
+    font-size: 11px;
+    padding: 6px 12px;
+    border-radius: 6px;
+    font-family: 'SF Mono', 'Fira Code', monospace;
+  }
+
+  /* NOTE */
+  .note {
+    font-size: 12px;
+    color: #5f5e5a;
+    border-left: 3px solid #d29922;
+    padding: 10px 14px;
+    border-radius: 0 8px 8px 0;
+    margin-top: 10px;
+    line-height: 1.6;
+    background: #fffbf5;
+  }
+  .note strong { color: #633806; }
+  .note code {
+    background: #FAEEDA;
+    padding: 1px 6px;
+    border-radius: 4px;
+    font-family: 'SF Mono', 'Fira Code', monospace;
+    font-size: 11px;
+    color: #633806;
+  }
+
+  /* FOOTER */
+  .footer { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; margin-top: 24px; }
+  @media(max-width:680px){ .footer { grid-template-columns: 1fr; } }
+  .footer-card {
+    border-radius: 12px;
+    padding: 16px;
+    border: 1px solid #e4e2db;
+    background: #ffffff;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+  }
+  .footer-card h4 { font-size: 13px; font-weight: 600; margin-bottom: 6px; color: #1a1a18; }
+  .footer-card p  { font-size: 12px; color: #5f5e5a; line-height: 1.5; }
+  .footer-card code {
+    background: #f1efe8;
+    padding: 1px 6px;
+    border-radius: 4px;
+    font-family: 'SF Mono', 'Fira Code', monospace;
+    font-size: 11px;
+  }
+
+  /* PAGE FOOTER */
+  .page-footer {
+    text-align: center;
+    margin-top: 48px;
+    font-size: 12px;
+    color: #888780;
+    border-top: 1px solid #e4e2db;
+    padding-top: 24px;
+  }
+  .page-footer a { color: #185FA5; text-decoration: none; }
+  .page-footer a:hover { text-decoration: underline; }
+
+  .divider { border: none; border-top: 1px solid #e4e2db; margin: 24px 0; }
+
+  .step-num {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    background: #1a1a18;
+    color: #f8f7f4;
+    font-size: 11px;
+    font-weight: 700;
+    margin-right: 6px;
+    vertical-align: middle;
+  }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <!-- HEADER -->
+  <div class="header">
+    <div class="badge-header">Framework de Referência</div>
+    <h1>DevOps na AWS com <span>Kubernetes</span></h1>
+    <p>Guia completo para engenheiros DevOps: do ambiente local à aplicação <strong>app-devops-matta</strong> em produção rodando em containers no Amazon EKS, com comandos reais em cada etapa.</p>
+    <div class="meta">
+      Publicado por <a href="https://github.com/seuusuario" target="_blank">@seuusuario</a> &nbsp;·&nbsp;
+      Repositório: <a href="https://github.com/seuusuario/devops-matta-framework" target="_blank">github.com/seuusuario/devops-matta-framework</a>
+    </div>
+  </div>
+
+  <!-- GITHUB BANNER -->
+  <div class="github-banner">
+    <div class="icon">🐙</div>
+    <div>
+      <h4>Framework publicado via GitHub Pages</h4>
+      <p>Acesse em <code>seuusuario.github.io/devops-matta-framework</code> &nbsp;·&nbsp; Repositório público com o código completo da solução</p>
+    </div>
+  </div>
+
+  <!-- PILARES -->
+  <div class="section-title">Pilares do framework</div>
+  <div class="pillars">
+    <div class="pillar p1"><h3>🏗 Infraestrutura como Código</h3><p>Terraform provisiona toda a infra AWS de forma declarativa e versionada no Git.</p></div>
+    <div class="pillar p2"><h3>🚀 Pipeline CI/CD</h3><p>Build, teste e deploy automatizados via GitHub Actions do commit ao EKS.</p></div>
+    <div class="pillar p3"><h3>🔐 Segurança &amp; IAM</h3><p>Least privilege, IRSA e OIDC — zero credenciais hardcoded nos pods.</p></div>
+    <div class="pillar p4"><h3>☸ Orquestração</h3><p>Kubernetes no EKS com Ingress, namespaces e service accounts por workload.</p></div>
+  </div>
+
+  <hr class="divider">
+
+  <!-- ETAPA 1 -->
+  <div class="section-title"><span class="step-num">1</span> Preparar a estação de trabalho</div>
+  <div class="grid3">
+    <div class="card"><h4>Ubuntu Linux</h4><p>Nativo ou VM — ambiente recomendado</p></div>
+    <div class="card"><h4>Windows + VS Code + WSL2</h4><p>Remote extension + terminal Ubuntu integrado</p></div>
+    <div class="card"><h4>macOS</h4><p>Terminal nativo + Homebrew para dependências</p></div>
+  </div>
+  <div class="tools-row">
+    <span class="chip">AWS CLI v2</span><span class="chip">eksctl</span><span class="chip">kubectl</span>
+    <span class="chip">Helm v3</span><span class="chip">Terraform</span><span class="chip">Docker</span>
+    <span class="chip">Git</span><span class="chip">VS Code</span>
+  </div>
+  <div class="term">
+    <div><span class="comment"># Instalar AWS CLI v2</span></div>
+    <div><span class="prompt">$ </span><span class="cmd">curl -o awscliv2.zip</span> <span class="val">https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip</span></div>
+    <div><span class="prompt">$ </span><span class="cmd">unzip awscliv2.zip</span> <span class="flag">&amp;&amp;</span> <span class="cmd">sudo ./aws/install</span></div>
+    <div style="margin-top:6px;"><span class="comment"># Instalar eksctl</span></div>
+    <div><span class="prompt">$ </span><span class="cmd">curl --silent --location</span> <span class="val">"https://github.com/weaveworks/eksctl/releases/latest/download/eksctl_$(uname -s)_amd64.tar.gz"</span> <span class="flag">|</span> <span class="cmd">tar xz -C /tmp</span></div>
+    <div><span class="prompt">$ </span><span class="cmd">sudo cp /tmp/eksctl /usr/bin</span></div>
+    <div style="margin-top:6px;"><span class="comment"># Instalar kubectl</span></div>
+    <div><span class="prompt">$ </span><span class="cmd">curl -o kubectl</span> <span class="val">https://amazon-eks.s3.us-west-2.amazonaws.com/1.18.9/2020-11-02/bin/linux/amd64/kubectl</span></div>
+    <div><span class="prompt">$ </span><span class="cmd">chmod +x ./kubectl</span> <span class="flag">&amp;&amp;</span> <span class="cmd">mkdir -p $HOME/bin</span> <span class="flag">&amp;&amp;</span> <span class="cmd">cp ./kubectl $HOME/bin/kubectl</span></div>
+    <div style="margin-top:6px;"><span class="comment"># Instalar Helm v3</span></div>
+    <div><span class="prompt">$ </span><span class="cmd">curl -fsSL -o get_helm.sh</span> <span class="val">https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3</span></div>
+    <div><span class="prompt">$ </span><span class="cmd">chmod 700 get_helm.sh &amp;&amp; ./get_helm.sh</span></div>
+  </div>
+
+  <hr class="divider">
+
+  <!-- ETAPA 2 -->
+  <div class="section-title"><span class="step-num">2</span> Configurar credenciais AWS (IAM)</div>
+  <div class="note"><strong>⚠ Importante:</strong> Se estiver usando AWS Cloud9 ou ambientes com credenciais gerenciadas, desative as credenciais temporárias antes de exportar as variáveis abaixo — caso contrário o eksctl não funcionará corretamente.</div>
+  <div class="grid2" style="margin-top:12px;">
+    <div class="card amber">
+      <h4>Criar usuário IAM devops-matta-user</h4>
+      <p>AdministratorAccess policy + Access Key para autenticação via CLI</p>
+      <div class="term">
+        <div><span class="prompt">$ </span><span class="cmd">aws iam create-user</span> <span class="flag">--user-name</span> <span class="val">devops-matta-user</span></div>
+        <div><span class="prompt">$ </span><span class="cmd">aws iam attach-user-policy</span> \</div>
+        <div>&nbsp;&nbsp;<span class="flag">--user-name</span> <span class="val">devops-matta-user</span> \</div>
+        <div>&nbsp;&nbsp;<span class="flag">--policy-arn</span> <span class="val">arn:aws:iam::aws:policy/AdministratorAccess</span></div>
+        <div style="margin-top:6px;"><span class="comment"># Exportar credenciais no ambiente</span></div>
+        <div><span class="prompt">$ </span><span class="cmd">export</span> <span class="flag">AWS_ACCESS_KEY_ID</span>=<span class="val">AKIAIOSFODNN7EXAMPLE</span></div>
+        <div><span class="prompt">$ </span><span class="cmd">export</span> <span class="flag">AWS_SECRET_ACCESS_KEY</span>=<span class="val">wJalrXUtnFEMI/K7MDENG</span></div>
+        <div><span class="prompt">$ </span><span class="cmd">aws sts get-caller-identity</span></div>
+      </div>
+    </div>
+    <div class="card green">
+      <h4>Terraform — provisionar S3 + DynamoDB</h4>
+      <p>Infraestrutura de dados para cada estado via IaC — versionada no Git</p>
+      <div class="term">
+        <div><span class="prompt">$ </span><span class="cmd">cd</span> <span class="val">app-devops-matta/infrastructure/terraform</span></div>
+        <div><span class="prompt">$ </span><span class="cmd">terraform init</span></div>
+        <div><span class="prompt">$ </span><span class="cmd">terraform plan</span></div>
+        <div><span class="prompt">$ </span><span class="cmd">terraform apply</span></div>
+        <div style="margin-top:4px;"><span class="out"># Outputs: s3_bucket_name, dynamodb_table_name</span></div>
+        <div><span class="out"># Anote os nomes — serão usados nos YAMLs</span></div>
+      </div>
+    </div>
+  </div>
+
+  <hr class="divider">
+
+  <!-- ETAPA 3 -->
+  <div class="section-title"><span class="step-num">3</span> Criar e conectar ao cluster EKS</div>
+  <div class="note"><strong>⏱ Atenção:</strong> O comando <code>eksctl create cluster</code> pode levar entre 15 e 20 minutos para concluir. Aguarde a finalização antes de prosseguir.</div>
+  <div class="grid2" style="margin-top:12px;">
+    <div class="card blue">
+      <h4>Criar o cluster EKS</h4>
+      <p>Node group com instâncias t3.medium na us-east-1</p>
+      <div class="term">
+        <div><span class="prompt">$ </span><span class="cmd">eksctl create cluster</span> \</div>
+        <div>&nbsp;&nbsp;<span class="flag">--name</span> <span class="val">devops-matta-cluster</span> \</div>
+        <div>&nbsp;&nbsp;<span class="flag">--region</span> <span class="val">us-east-1</span> \</div>
+        <div>&nbsp;&nbsp;<span class="flag">--nodegroup-name</span> <span class="val">standard-workers</span> \</div>
+        <div>&nbsp;&nbsp;<span class="flag">--node-type</span> <span class="val">t3.medium</span> \</div>
+        <div>&nbsp;&nbsp;<span class="flag">--nodes</span> <span class="val">1</span></div>
+      </div>
+    </div>
+    <div class="card blue">
+      <h4>Conectar kubectl ao cluster</h4>
+      <p>Atualiza o kubeconfig e verifica a conectividade</p>
+      <div class="term">
+        <div><span class="prompt">$ </span><span class="cmd">aws eks update-kubeconfig</span> \</div>
+        <div>&nbsp;&nbsp;<span class="flag">--name</span> <span class="val">devops-matta-cluster</span></div>
+        <div style="margin-top:6px;"><span class="prompt">$ </span><span class="cmd">kubectl get nodes</span></div>
+        <div><span class="out">NAME           STATUS   ROLES    AGE</span></div>
+        <div><span class="out">ip-192-168-x   Ready    &lt;none&gt;   2m</span></div>
+        <div style="margin-top:4px;"><span class="prompt">$ </span><span class="cmd">kubectl get svc</span></div>
+      </div>
+    </div>
+  </div>
+
+  <hr class="divider">
+
+  <!-- ETAPA 4 -->
+  <div class="section-title"><span class="step-num">4</span> IAM OIDC Provider + AWS Load Balancer Controller</div>
+  <div class="note"><strong>⚠ Atenção:</strong> Substitua <code>&lt;ACCOUNT_ID&gt;</code> pelo ID real da sua conta AWS. Obtenha com: <code>aws sts get-caller-identity --query Account --output text</code></div>
+  <div class="grid2" style="margin-top:12px;">
+    <div class="card amber">
+      <h4>Associar OIDC Provider + criar IAM Policy</h4>
+      <p>Permite que service accounts assumam roles IAM via IRSA</p>
+      <div class="term">
+        <div><span class="prompt">$ </span><span class="cmd">eksctl utils associate-iam-oidc-provider</span> \</div>
+        <div>&nbsp;&nbsp;<span class="flag">--cluster</span> <span class="val">devops-matta-cluster</span> \</div>
+        <div>&nbsp;&nbsp;<span class="flag">--approve</span></div>
+        <div style="margin-top:6px;"><span class="prompt">$ </span><span class="cmd">curl -O</span> <span class="val">https://raw.githubusercontent.com/kubernetes-sigs/aws-load-balancer-controller/refs/heads/main/docs/install/iam_policy.json</span></div>
+        <div><span class="prompt">$ </span><span class="cmd">aws iam create-policy</span> \</div>
+        <div>&nbsp;&nbsp;<span class="flag">--policy-name</span> <span class="val">AWSLoadBalancerControllerIAMPolicy</span> \</div>
+        <div>&nbsp;&nbsp;<span class="flag">--policy-document</span> <span class="val">file://iam_policy.json</span></div>
+      </div>
+    </div>
+    <div class="card amber">
+      <h4>Criar IAM Service Account para o LBC</h4>
+      <p>Service account no kube-system vinculado à role do Load Balancer Controller</p>
+      <div class="term">
+        <div><span class="prompt">$ </span><span class="cmd">eksctl create iamserviceaccount</span> \</div>
+        <div>&nbsp;&nbsp;<span class="flag">--cluster</span>=<span class="val">devops-matta-cluster</span> \</div>
+        <div>&nbsp;&nbsp;<span class="flag">--namespace</span>=<span class="val">kube-system</span> \</div>
+        <div>&nbsp;&nbsp;<span class="flag">--name</span>=<span class="val">aws-load-balancer-controller</span> \</div>
+        <div>&nbsp;&nbsp;<span class="flag">--role-name</span> <span class="val">AmazonEKSLoadBalancerControllerRole</span> \</div>
+        <div>&nbsp;&nbsp;<span class="flag">--attach-policy-arn</span>=<span class="val">arn:aws:iam::&lt;ACCOUNT_ID&gt;:policy/AWSLoadBalancerControllerIAMPolicy</span> \</div>
+        <div>&nbsp;&nbsp;<span class="flag">--approve</span></div>
+      </div>
+    </div>
+  </div>
+  <div class="card purple" style="margin-top:12px;">
+    <h4>Instalar AWS Load Balancer Controller via Helm</h4>
+    <p>O LBC fica rodando no kube-system aguardando — provisiona o ALB apenas quando o Ingress for aplicado na Etapa 7.</p>
+    <div class="term">
+      <div><span class="prompt">$ </span><span class="cmd">helm repo add eks</span> <span class="val">https://aws.github.io/eks-charts</span> <span class="flag">&amp;&amp;</span> <span class="cmd">helm repo update eks</span></div>
+      <div><span class="prompt">$ </span><span class="cmd">helm install aws-load-balancer-controller eks/aws-load-balancer-controller</span> \</div>
+      <div>&nbsp;&nbsp;<span class="flag">-n</span> <span class="val">kube-system</span> \</div>
+      <div>&nbsp;&nbsp;<span class="flag">--set</span> <span class="val">clusterName=devops-matta-cluster</span> \</div>
+      <div>&nbsp;&nbsp;<span class="flag">--set</span> <span class="val">serviceAccount.create=false</span> \</div>
+      <div>&nbsp;&nbsp;<span class="flag">--set</span> <span class="val">serviceAccount.name=aws-load-balancer-controller</span></div>
+      <div style="margin-top:6px;"><span class="prompt">$ </span><span class="cmd">kubectl get deployment -n kube-system aws-load-balancer-controller</span></div>
+      <div><span class="out">NAME                           READY   UP-TO-DATE   AVAILABLE</span></div>
+      <div><span class="out">aws-load-balancer-controller   2/2     2            2</span></div>
+    </div>
+  </div>
+
+  <hr class="divider">
+
+  <!-- ETAPA 5 -->
+  <div class="section-title"><span class="step-num">5</span> IAM Service Account dos pods + build da imagem</div>
+  <div class="note"><strong>⚠ Atenção:</strong> No comando de push para o ECR, substitua <code>&lt;alias&gt;</code> pelo alias único do seu repositório público — disponível no console do Amazon ECR após criar o repositório.</div>
+  <div class="grid2" style="margin-top:12px;">
+    <div class="card teal">
+      <h4>IAM Service Account — acesso a S3 e DynamoDB</h4>
+      <p>Pods da aplicação acessam recursos de dados sem credenciais hardcoded via IRSA</p>
+      <div class="term">
+        <div><span class="prompt">$ </span><span class="cmd">eksctl create iamserviceaccount</span> \</div>
+        <div>&nbsp;&nbsp;<span class="flag">--cluster</span>=<span class="val">devops-matta-cluster</span> \</div>
+        <div>&nbsp;&nbsp;<span class="flag">--name</span>=<span class="val">devops-matta-pod-role</span> \</div>
+        <div>&nbsp;&nbsp;<span class="flag">--role-name</span> <span class="val">DevOpsMattaPodExecutionRole</span> \</div>
+        <div>&nbsp;&nbsp;<span class="flag">--attach-policy-arn</span>=<span class="val">arn:aws:iam::aws:policy/AmazonS3FullAccess</span> \</div>
+        <div>&nbsp;&nbsp;<span class="flag">--attach-policy-arn</span>=<span class="val">arn:aws:iam::aws:policy/AmazonDynamoDBFullAccess</span> \</div>
+        <div>&nbsp;&nbsp;<span class="flag">--region</span> <span class="val">us-east-1</span> \</div>
+        <div>&nbsp;&nbsp;<span class="flag">--approve</span></div>
+      </div>
+    </div>
+    <div class="card purple">
+      <h4>Build e push da imagem para o ECR</h4>
+      <p>Cria repositório público no ECR, builda e envia a imagem Docker</p>
+      <div class="term">
+        <div><span class="comment"># Autenticar Docker no ECR público</span></div>
+        <div><span class="prompt">$ </span><span class="cmd">aws ecr-public get-login-password</span> <span class="flag">--region</span> <span class="val">us-east-1</span> <span class="flag">|</span> \</div>
+        <div>&nbsp;&nbsp;<span class="cmd">docker login</span> <span class="flag">--username</span> <span class="val">AWS</span> <span class="flag">--password-stdin</span> <span class="val">public.ecr.aws</span></div>
+        <div style="margin-top:6px;"><span class="prompt">$ </span><span class="cmd">cd app-devops-matta/src</span></div>
+        <div><span class="prompt">$ </span><span class="cmd">docker build -t app-devops-matta .</span></div>
+        <div><span class="prompt">$ </span><span class="cmd">docker tag app-devops-matta:latest</span> <span class="val">public.ecr.aws/&lt;alias&gt;/app-devops-matta:latest</span></div>
+        <div><span class="prompt">$ </span><span class="cmd">docker push</span> <span class="val">public.ecr.aws/&lt;alias&gt;/app-devops-matta:latest</span></div>
+      </div>
+    </div>
+  </div>
+
+  <hr class="divider">
+
+  <!-- ETAPA 6 -->
+  <div class="section-title"><span class="step-num">6</span> Route 53 + ACM — domínio e certificado SSL</div>
+  <div class="note"><strong>⚠ Atenção:</strong> O domínio <code>app-devops-matta.com</code> precisa estar registrado em um registrador antes desta etapa. Após criar a hosted zone, aponte os 4 name servers retornados no registrador. A propagação pode levar até 24h.</div>
+  <div class="grid2" style="margin-top:12px;">
+    <div class="card blue">
+      <h4>Criar a Hosted Zone no Route 53</h4>
+      <p>O <code>--caller-reference $(date +%s)</code> gera um ID único automático para evitar criação duplicada da zona.</p>
+      <div class="term">
+        <div><span class="prompt">$ </span><span class="cmd">aws route53 create-hosted-zone</span> \</div>
+        <div>&nbsp;&nbsp;<span class="flag">--name</span> <span class="val">app-devops-matta.com</span> \</div>
+        <div>&nbsp;&nbsp;<span class="flag">--caller-reference</span> <span class="val">$(date +%s)</span></div>
+        <div style="margin-top:6px;"><span class="out"># Output: HostedZoneId + 4 name servers NS</span></div>
+        <div><span class="out"># Exemplo de HostedZoneId: Z0481MXKF3GTR</span></div>
+        <div style="margin-top:6px;"><span class="comment"># Consultar o HostedZoneId a qualquer momento</span></div>
+        <div><span class="prompt">$ </span><span class="cmd">aws route53 list-hosted-zones</span> \</div>
+        <div>&nbsp;&nbsp;<span class="flag">--query</span> <span class="val">"HostedZones[?Name=='app-devops-matta.com.'].Id"</span> \</div>
+        <div>&nbsp;&nbsp;<span class="flag">--output</span> <span class="val">text</span></div>
+      </div>
+    </div>
+    <div class="card teal">
+      <h4>Solicitar certificado SSL wildcard no ACM</h4>
+      <p>Anote o <code>CertificateArn</code> retornado — será usado na annotation do Ingress na Etapa 7.</p>
+      <div class="term">
+        <div><span class="prompt">$ </span><span class="cmd">aws acm request-certificate</span> \</div>
+        <div>&nbsp;&nbsp;<span class="flag">--domain-name</span> <span class="val">*.app-devops-matta.com</span> \</div>
+        <div>&nbsp;&nbsp;<span class="flag">--subject-alternative-names</span> <span class="val">app-devops-matta.com</span> \</div>
+        <div>&nbsp;&nbsp;<span class="flag">--validation-method</span> <span class="val">DNS</span> \</div>
+        <div>&nbsp;&nbsp;<span class="flag">--region</span> <span class="val">us-east-1</span></div>
+        <div style="margin-top:6px;"><span class="out"># Output: { "CertificateArn": "arn:aws:acm:us-east-1:</span></div>
+        <div><span class="out">#   &lt;ACCOUNT_ID&gt;:certificate/8F3B2A1C-4D5E-6F7G-8H9I-0J1K2L3M4N5O" }</span></div>
+        <div><span class="out"># ⚠ Anote o CertificateArn — usado no Ingress YAML</span></div>
+      </div>
+    </div>
+  </div>
+  <div class="note"><strong>📋 Próximo passo:</strong> Valide o certificado adicionando o registro CNAME gerado pelo ACM na hosted zone do Route 53. O certificado precisa estar com status <strong>ISSUED</strong> antes de aplicar o Ingress.</div>
+
+  <hr class="divider">
+
+  <!-- ETAPA 7 -->
+  <div class="section-title"><span class="step-num">7</span> Deploy da aplicação no EKS</div>
+  <div class="note"><strong>⚠ Atenção:</strong> Antes do <code>kubectl apply</code>, substitua nos arquivos YAML a imagem do ECR e os nomes do S3 e DynamoDB gerados pelo Terraform. Após aplicar o Ingress, aguarde 3 a 5 minutos para o ALB ser provisionado.</div>
+  <div class="aws-box" style="margin-top:12px;">
+    <div class="aws-box-title">☁ AWS Cloud — us-east-1</div>
+    <div class="grid3" style="margin-bottom:12px;">
+      <div class="card blue"><h4>Route 53</h4><p>Hosted zone criada na Etapa 6 — registros Alias A adicionados após o Ingress</p></div>
+      <div class="card teal"><h4>ACM</h4><p>Certificado SSL wildcard <em>*.app-devops-matta.com</em> com status ISSUED</p></div>
+      <div class="card amber"><h4>ALB — internet-facing</h4><p>Provisionado automaticamente pelo LBC ao aplicar o Ingress YAML</p></div>
+    </div>
+    <div class="eks-box">
+      <div class="eks-box-title">☸ EKS Cluster — devops-matta-cluster · Node: t3.medium · us-east-1</div>
+      <div class="grid2" style="margin-bottom:10px;">
+        <div class="card purple" style="padding:12px;">
+          <h4>AWS Load Balancer Controller</h4>
+          <p>Rodando no kube-system · provisiona o ALB ao detectar o Ingress</p>
+        </div>
+        <div class="card amber" style="padding:12px;">
+          <h4>DevOpsMattaPodExecutionRole</h4>
+          <p>Service Account com S3FullAccess + DynamoDBFullAccess via IRSA</p>
+        </div>
+      </div>
+      <div class="term" style="margin-bottom:12px;">
+        <div><span class="comment"># Deploy dos manifests por estado</span></div>
+        <div><span class="prompt">$ </span><span class="cmd">kubectl apply -f</span> <span class="val">app-devops-matta-oregon.yaml</span></div>
+        <div><span class="prompt">$ </span><span class="cmd">kubectl apply -f</span> <span class="val">app-devops-matta-florida.yaml</span></div>
+        <div style="margin-top:6px;"><span class="comment"># Aplicar o Ingress — neste momento o ALB é criado na AWS</span></div>
+        <div><span class="prompt">$ </span><span class="cmd">kubectl apply -f</span> <span class="val">app-devops-matta-ingress-all.yaml</span></div>
+        <div style="margin-top:6px;"><span class="comment"># Verificar recursos e obter o DNS do ALB (aguarde 3-5 min)</span></div>
+        <div><span class="prompt">$ </span><span class="cmd">kubectl get pods</span> <span class="flag">&amp;&amp;</span> <span class="cmd">kubectl get svc</span> <span class="flag">&amp;&amp;</span> <span class="cmd">kubectl get ingress</span></div>
+        <div><span class="out"># ADDRESS: k8s-frontend-xxxxxx.us-east-1.elb.amazonaws.com ← anote este DNS</span></div>
+      </div>
+      <div class="states">
+        <div class="state-box state-or">
+          <div class="state-title">🌲 State — Oregon</div>
+          <div class="pod pod-ng-or">Nginx reverse proxy<span>ConfigMap nginx-config-oregon · porta 80</span></div>
+          <div class="pod pod-ap-or">App Pod — app-devops-matta<span>ClusterIP · porta 8000 · serviceAccount: devops-matta-pod-role</span></div>
+          <div class="pod-data">S3: devops-matta-oregon-s3 · DynamoDB: devops-matta-oregon-db</div>
+        </div>
+        <div class="state-box state-fl">
+          <div class="state-title">🌴 State — Florida</div>
+          <div class="pod pod-ng-fl">Nginx reverse proxy<span>ConfigMap nginx-config-florida · porta 80</span></div>
+          <div class="pod pod-ap-fl">App Pod — app-devops-matta<span>ClusterIP · porta 8000 · serviceAccount: devops-matta-pod-role</span></div>
+          <div class="pod-data">S3: devops-matta-florida-s3 · DynamoDB: devops-matta-florida-db</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <hr class="divider">
+
+  <!-- ETAPA 8 -->
+  <div class="section-title"><span class="step-num">8</span> Registrar Alias records no Route 53 → ALB</div>
+  <div class="note"><strong>ℹ Info:</strong> Dois IDs diferentes em jogo — <code>Z0481MXKF3GTR</code> é o HostedZoneId da sua zona DNS (gerado na Etapa 6). <code>Z35SXDOTRQ7X7K</code> é o HostedZoneId fixo do ALB na us-east-1, valor padrão da AWS para esta região.</div>
+  <div class="card blue" style="margin-top:12px;">
+    <h4>Criar registros Alias A para Oregon e Florida</h4>
+    <p>Com o DNS do ALB obtido via <code>kubectl get ingress</code>, crie um Alias record para cada subdomínio.</p>
+    <div class="term">
+      <div><span class="comment"># oregon.app-devops-matta.com → ALB</span></div>
+      <div><span class="prompt">$ </span><span class="cmd">aws route53 change-resource-record-sets</span> \</div>
+      <div>&nbsp;&nbsp;<span class="flag">--hosted-zone-id</span> <span class="val">Z0481MXKF3GTR</span> \</div>
+      <div>&nbsp;&nbsp;<span class="flag">--change-batch</span> <span class="val">'{</span></div>
+      <div><span class="val">&nbsp;&nbsp;&nbsp;&nbsp;"Changes": [{"Action": "CREATE", "ResourceRecordSet": {</span></div>
+      <div><span class="val">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"Name": "oregon.app-devops-matta.com", "Type": "A",</span></div>
+      <div><span class="val">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"AliasTarget": { "HostedZoneId": "Z35SXDOTRQ7X7K",</span></div>
+      <div><span class="val">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"DNSName": "k8s-frontend-xxxxxx.us-east-1.elb.amazonaws.com",</span></div>
+      <div><span class="val">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"EvaluateTargetHealth": true }}}]}'</span></div>
+      <div style="margin-top:10px;"><span class="comment"># florida.app-devops-matta.com → mesmo ALB</span></div>
+      <div><span class="prompt">$ </span><span class="cmd">aws route53 change-resource-record-sets</span> \</div>
+      <div>&nbsp;&nbsp;<span class="flag">--hosted-zone-id</span> <span class="val">Z0481MXKF3GTR</span> \</div>
+      <div>&nbsp;&nbsp;<span class="flag">--change-batch</span> <span class="val">'{</span></div>
+      <div><span class="val">&nbsp;&nbsp;&nbsp;&nbsp;"Changes": [{"Action": "CREATE", "ResourceRecordSet": {</span></div>
+      <div><span class="val">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"Name": "florida.app-devops-matta.com", "Type": "A",</span></div>
+      <div><span class="val">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"AliasTarget": { "HostedZoneId": "Z35SXDOTRQ7X7K",</span></div>
+      <div><span class="val">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"DNSName": "k8s-frontend-xxxxxx.us-east-1.elb.amazonaws.com",</span></div>
+      <div><span class="val">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"EvaluateTargetHealth": true }}}]}'</span></div>
+      <div style="margin-top:10px;"><span class="comment"># Testar acesso via HTTPS</span></div>
+      <div><span class="prompt">$ </span><span class="cmd">curl -I https://oregon.app-devops-matta.com</span></div>
+      <div><span class="prompt">$ </span><span class="cmd">curl -I https://florida.app-devops-matta.com</span></div>
+    </div>
+  </div>
+
+  <hr class="divider">
+
+  <!-- PIPELINE -->
+  <div class="section-title">Pipeline CI/CD — GitHub Actions</div>
+  <div class="pipeline">
+    <div class="ps ps1"><h4>Code</h4><p>git push<br>feature branch</p></div>
+    <div class="ps ps2"><h4>Build</h4><p>docker build<br>imagem app</p></div>
+    <div class="ps ps3"><h4>Test</h4><p>unit tests<br>lint + scan</p></div>
+    <div class="ps ps4"><h4>Push</h4><p>docker push<br>Amazon ECR</p></div>
+    <div class="ps ps5"><h4>IaC Apply</h4><p>terraform apply<br>S3 + DynamoDB</p></div>
+    <div class="ps ps6"><h4>Deploy</h4><p>kubectl apply<br>manifests EKS</p></div>
+  </div>
+  <div class="term">
+    <div><span class="comment"># .github/workflows/deploy.yml (trecho principal)</span></div>
+    <div><span class="flag">on:</span> <span class="val">push:</span> <span class="cmd">branches: [main]</span></div>
+    <div><span class="flag">jobs:</span></div>
+    <div>&nbsp;&nbsp;<span class="val">deploy:</span></div>
+    <div>&nbsp;&nbsp;&nbsp;&nbsp;<span class="flag">steps:</span></div>
+    <div>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="comment">- uses: actions/checkout@v3</span></div>
+    <div>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="comment">- name: Configure AWS credentials</span></div>
+    <div>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="cmd">uses: aws-actions/configure-aws-credentials@v2</span></div>
+    <div>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="comment">- name: Build &amp; push to ECR</span></div>
+    <div>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="cmd">run: docker build -t $ECR_REPO . &amp;&amp; docker push $ECR_REPO</span></div>
+    <div>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="comment">- name: Terraform apply</span></div>
+    <div>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="cmd">run: terraform -chdir=infrastructure apply -auto-approve</span></div>
+    <div>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="comment">- name: Deploy to EKS</span></div>
+    <div>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="cmd">run: kubectl apply -f k8s/</span></div>
+  </div>
+
+  <!-- BOAS PRÁTICAS -->
+  <div class="section-title">Boas práticas aplicadas</div>
+  <div class="footer">
+    <div class="footer-card">
+      <h4>🗂 Versionamento &amp; IaC</h4>
+      <p>Toda infra no Git via Terraform. State remoto no S3 com lock no DynamoDB. Nenhum recurso criado manualmente.</p>
+    </div>
+    <div class="footer-card">
+      <h4>🔐 Segurança por padrão</h4>
+      <p>IRSA via <code>eksctl create iamserviceaccount</code>. Zero credenciais nos pods. SSL automático via ACM. Least privilege por role.</p>
+    </div>
+    <div class="footer-card">
+      <h4>📦 Isolamento por workload</h4>
+      <p>Cada estado tem deployment, service, ConfigMap e recursos de dados (S3 + DynamoDB) completamente isolados.</p>
+    </div>
+  </div>
+
+  <!-- PAGE FOOTER -->
+  <div class="page-footer">
+    <p>Desenvolvido por <a href="https://github.com/seuusuario" target="_blank">@seuusuario</a> &nbsp;·&nbsp;
+    Repositório: <a href="https://github.com/seuusuario/devops-matta-framework" target="_blank">github.com/seuusuario/devops-matta-framework</a> &nbsp;·&nbsp;
+    <a href="https://www.linkedin.com/in/seulinkedin" target="_blank">LinkedIn</a></p>
+    <p style="margin-top:8px;color:#b4b2a9;">Framework de referência — DevOps na AWS com Kubernetes · app-devops-matta</p>
+  </div>
+
+</div>
+<!-- Code injected by live-server -->
+<script>
+	// <![CDATA[  <-- For SVG support
+	if ('WebSocket' in window) {
+		(function () {
+			function refreshCSS() {
+				var sheets = [].slice.call(document.getElementsByTagName("link"));
+				var head = document.getElementsByTagName("head")[0];
+				for (var i = 0; i < sheets.length; ++i) {
+					var elem = sheets[i];
+					var parent = elem.parentElement || head;
+					parent.removeChild(elem);
+					var rel = elem.rel;
+					if (elem.href && typeof rel != "string" || rel.length == 0 || rel.toLowerCase() == "stylesheet") {
+						var url = elem.href.replace(/(&|\?)_cacheOverride=\d+/, '');
+						elem.href = url + (url.indexOf('?') >= 0 ? '&' : '?') + '_cacheOverride=' + (new Date().valueOf());
+					}
+					parent.appendChild(elem);
+				}
+			}
+			var protocol = window.location.protocol === 'http:' ? 'ws://' : 'wss://';
+			var address = protocol + window.location.host + window.location.pathname + '/ws';
+			var socket = new WebSocket(address);
+			socket.onmessage = function (msg) {
+				if (msg.data == 'reload') window.location.reload();
+				else if (msg.data == 'refreshcss') refreshCSS();
+			};
+			if (sessionStorage && !sessionStorage.getItem('IsThisFirstTime_Log_From_LiveServer')) {
+				console.log('Live reload enabled.');
+				sessionStorage.setItem('IsThisFirstTime_Log_From_LiveServer', true);
+			}
+		})();
+	}
+	else {
+		console.error('Upgrade your browser. This Browser is NOT supported WebSocket for Live-Reloading.');
+	}
+	// ]]>
+</script>
+</body>
+</html>
