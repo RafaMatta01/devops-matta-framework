@@ -229,8 +229,8 @@
   .states { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
   @media(max-width:580px){ .states { grid-template-columns: 1fr; } }
   .state-box { border-radius: 12px; padding: 14px; border: 1px solid; }
-  .state-or  { background: rgba(225,245,238,0.3); border-color: #5DCAA5; }
-  .state-fl  { background: rgba(250,236,231,0.3); border-color: #F0997B; }
+  .state-norte { background: rgba(225,245,238,0.3); border-color: #5DCAA5; }
+  .state-sul   { background: rgba(250,236,231,0.3); border-color: #F0997B; }
   .state-title {
     font-size: 11px;
     font-weight: 700;
@@ -238,14 +238,14 @@
     letter-spacing: .07em;
     margin-bottom: 10px;
   }
-  .state-or .state-title { color: #085041; }
-  .state-fl .state-title { color: #4A1B0C; }
+  .state-norte .state-title { color: #085041; }
+  .state-sul .state-title   { color: #4A1B0C; }
   .pod { border-radius: 8px; padding: 8px 12px; font-size: 12px; font-weight: 600; margin-bottom: 6px; }
   .pod span { font-size: 11px; font-weight: 400; color: #5f5e5a; display: block; margin-top: 2px; }
-  .pod-ng-or { background: #E1F5EE; color: #085041; }
-  .pod-ap-or { background: rgba(159,225,203,0.3); color: #085041; border: 1px solid #5DCAA5; }
-  .pod-ng-fl { background: #FAECE7; color: #4A1B0C; }
-  .pod-ap-fl { background: rgba(245,196,179,0.3); color: #4A1B0C; border: 1px solid #F0997B; }
+  .pod-ng-norte { background: #E1F5EE; color: #085041; }
+  .pod-ap-norte { background: rgba(159,225,203,0.3); color: #085041; border: 1px solid #5DCAA5; }
+  .pod-ng-sul   { background: #FAECE7; color: #4A1B0C; }
+  .pod-ap-sul   { background: rgba(245,196,179,0.3); color: #4A1B0C; border: 1px solid #F0997B; }
   .pod-data  {
     background: #f8f7f4;
     border: 1px dashed #b4b2a9;
@@ -417,7 +417,7 @@
         <div><span class="prompt">$ </span><span class="cmd">terraform init</span></div>
         <div><span class="prompt">$ </span><span class="cmd">terraform plan</span></div>
         <div><span class="prompt">$ </span><span class="cmd">terraform apply</span></div>
-        <div style="margin-top:4px;"><span class="out"># Outputs: s3_bucket_name, dynamodb_table_name</span></div>
+        <div style="margin-top:4px;"><span class="out"># Outputs: s3_bucket_name (norte e sul), dynamodb_table_name (norte e sul)</span></div>
         <div><span class="out"># Anote os nomes — serão usados nos YAMLs</span></div>
       </div>
     </div>
@@ -591,7 +591,8 @@
       <div class="card amber"><h4>ALB — internet-facing</h4><p>Provisionado automaticamente pelo LBC ao aplicar o Ingress YAML</p></div>
     </div>
     <div class="eks-box">
-      <div class="eks-box-title">☸ EKS Cluster — devops-matta-cluster · Node: t3.medium · us-east-1</div>
+      <div class="eks-box-title">☸ EKS Cluster — devops-matta-cluster · Node: t3.medium · us-east-1 · Private Subnet · VPC</div>
+      <div class="note" style="margin-bottom:10px;"><strong>ℹ Info:</strong> Um único cluster EKS na <code>us-east-1</code> hospeda os workloads de todas as filiais. Cada filial tem seus próprios pods, services e dados (S3 + DynamoDB). O Ingress direciona o tráfego pelo subdomínio.</div>
       <div class="grid2" style="margin-bottom:10px;">
         <div class="card purple" style="padding:12px;">
           <h4>AWS Load Balancer Controller</h4>
@@ -603,27 +604,29 @@
         </div>
       </div>
       <div class="term" style="margin-bottom:12px;">
-        <div><span class="comment"># Deploy dos manifests por estado</span></div>
-        <div><span class="prompt">$ </span><span class="cmd">kubectl apply -f</span> <span class="val">app-devops-matta-oregon.yaml</span></div>
-        <div><span class="prompt">$ </span><span class="cmd">kubectl apply -f</span> <span class="val">app-devops-matta-florida.yaml</span></div>
+        <div><span class="comment"># Cada YAML cria um conjunto completo de recursos para uma filial:</span></div>
+        <div><span class="comment"># Deployment Python + ClusterIP Service + Deployment Nginx + Service Nginx + ConfigMap</span></div>
+        <div style="margin-top:6px;"><span class="prompt">$ </span><span class="cmd">kubectl apply -f</span> <span class="val">app-devops-matta-norte.yaml</span></div>
+        <div><span class="prompt">$ </span><span class="cmd">kubectl apply -f</span> <span class="val">app-devops-matta-sul.yaml</span></div>
         <div style="margin-top:6px;"><span class="comment"># Aplicar o Ingress — neste momento o ALB é criado na AWS</span></div>
+        <div><span class="comment"># O Ingress roteia por subdomínio: norte.* → nginx-norte, sul.* → nginx-sul</span></div>
         <div><span class="prompt">$ </span><span class="cmd">kubectl apply -f</span> <span class="val">app-devops-matta-ingress-all.yaml</span></div>
         <div style="margin-top:6px;"><span class="comment"># Verificar recursos e obter o DNS do ALB (aguarde 3-5 min)</span></div>
         <div><span class="prompt">$ </span><span class="cmd">kubectl get pods</span> <span class="flag">&amp;&amp;</span> <span class="cmd">kubectl get svc</span> <span class="flag">&amp;&amp;</span> <span class="cmd">kubectl get ingress</span></div>
         <div><span class="out"># ADDRESS: k8s-frontend-xxxxxx.us-east-1.elb.amazonaws.com ← anote este DNS</span></div>
       </div>
       <div class="states">
-        <div class="state-box state-or">
-          <div class="state-title">🌲 State — Oregon</div>
-          <div class="pod pod-ng-or">Nginx reverse proxy<span>ConfigMap nginx-config-oregon · porta 80</span></div>
-          <div class="pod pod-ap-or">App Pod — app-devops-matta<span>ClusterIP · porta 8000 · serviceAccount: devops-matta-pod-role</span></div>
-          <div class="pod-data">S3: devops-matta-oregon-s3 · DynamoDB: devops-matta-oregon-db</div>
+        <div class="state-box state-norte">
+          <div class="state-title">🌿 Workload — Norte</div>
+          <div class="pod pod-ng-norte">Deployment: app-devops-matta-nginx-norte<span>Service: nginx-service-norte · porta 80 · ConfigMap: nginx-config-norte</span></div>
+          <div class="pod pod-ap-norte">Deployment: app-devops-matta-python-norte<span>Service: python-app-service-norte · ClusterIP · porta 8000 · serviceAccount: devops-matta-pod-role</span></div>
+          <div class="pod-data">AWS_BUCKET: devops-matta-norte-s3 · AWS_DYNAMODB_TABLE: devops-matta-norte-db · US_STATE: norte</div>
         </div>
-        <div class="state-box state-fl">
-          <div class="state-title">🌴 State — Florida</div>
-          <div class="pod pod-ng-fl">Nginx reverse proxy<span>ConfigMap nginx-config-florida · porta 80</span></div>
-          <div class="pod pod-ap-fl">App Pod — app-devops-matta<span>ClusterIP · porta 8000 · serviceAccount: devops-matta-pod-role</span></div>
-          <div class="pod-data">S3: devops-matta-florida-s3 · DynamoDB: devops-matta-florida-db</div>
+        <div class="state-box state-sul">
+          <div class="state-title">🌾 Workload — Sul</div>
+          <div class="pod pod-ng-sul">Deployment: app-devops-matta-nginx-sul<span>Service: nginx-service-sul · porta 80 · ConfigMap: nginx-config-sul</span></div>
+          <div class="pod pod-ap-sul">Deployment: app-devops-matta-python-sul<span>Service: python-app-service-sul · ClusterIP · porta 8000 · serviceAccount: devops-matta-pod-role</span></div>
+          <div class="pod-data">AWS_BUCKET: devops-matta-sul-s3 · AWS_DYNAMODB_TABLE: devops-matta-sul-db · US_STATE: sul</div>
         </div>
       </div>
     </div>
@@ -635,30 +638,30 @@
   <div class="section-title"><span class="step-num">8</span> Registrar Alias records no Route 53 → ALB</div>
   <div class="note"><strong>ℹ Info:</strong> Dois IDs diferentes em jogo — <code>Z0481MXKF3GTR</code> é o HostedZoneId da sua zona DNS (gerado na Etapa 6). <code>Z35SXDOTRQ7X7K</code> é o HostedZoneId fixo do ALB na us-east-1, valor padrão da AWS para esta região.</div>
   <div class="card blue" style="margin-top:12px;">
-    <h4>Criar registros Alias A para Oregon e Florida</h4>
+    <h4>Criar registros Alias A para Norte e Sul</h4>
     <p>Com o DNS do ALB obtido via <code>kubectl get ingress</code>, crie um Alias record para cada subdomínio.</p>
     <div class="term">
-      <div><span class="comment"># oregon.app-devops-matta.com → ALB</span></div>
+      <div><span class="comment"># norte.app-devops-matta.com → ALB</span></div>
       <div><span class="prompt">$ </span><span class="cmd">aws route53 change-resource-record-sets</span> \</div>
       <div>&nbsp;&nbsp;<span class="flag">--hosted-zone-id</span> <span class="val">Z0481MXKF3GTR</span> \</div>
       <div>&nbsp;&nbsp;<span class="flag">--change-batch</span> <span class="val">'{</span></div>
       <div><span class="val">&nbsp;&nbsp;&nbsp;&nbsp;"Changes": [{"Action": "CREATE", "ResourceRecordSet": {</span></div>
-      <div><span class="val">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"Name": "oregon.app-devops-matta.com", "Type": "A",</span></div>
+      <div><span class="val">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"Name": "norte.app-devops-matta.com", "Type": "A",</span></div>
       <div><span class="val">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"AliasTarget": { "HostedZoneId": "Z35SXDOTRQ7X7K",</span></div>
       <div><span class="val">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"DNSName": "k8s-frontend-xxxxxx.us-east-1.elb.amazonaws.com",</span></div>
       <div><span class="val">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"EvaluateTargetHealth": true }}}]}'</span></div>
-      <div style="margin-top:10px;"><span class="comment"># florida.app-devops-matta.com → mesmo ALB</span></div>
+      <div style="margin-top:10px;"><span class="comment"># sul.app-devops-matta.com → mesmo ALB</span></div>
       <div><span class="prompt">$ </span><span class="cmd">aws route53 change-resource-record-sets</span> \</div>
       <div>&nbsp;&nbsp;<span class="flag">--hosted-zone-id</span> <span class="val">Z0481MXKF3GTR</span> \</div>
       <div>&nbsp;&nbsp;<span class="flag">--change-batch</span> <span class="val">'{</span></div>
       <div><span class="val">&nbsp;&nbsp;&nbsp;&nbsp;"Changes": [{"Action": "CREATE", "ResourceRecordSet": {</span></div>
-      <div><span class="val">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"Name": "florida.app-devops-matta.com", "Type": "A",</span></div>
+      <div><span class="val">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"Name": "sul.app-devops-matta.com", "Type": "A",</span></div>
       <div><span class="val">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"AliasTarget": { "HostedZoneId": "Z35SXDOTRQ7X7K",</span></div>
       <div><span class="val">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"DNSName": "k8s-frontend-xxxxxx.us-east-1.elb.amazonaws.com",</span></div>
       <div><span class="val">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"EvaluateTargetHealth": true }}}]}'</span></div>
       <div style="margin-top:10px;"><span class="comment"># Testar acesso via HTTPS</span></div>
-      <div><span class="prompt">$ </span><span class="cmd">curl -I https://oregon.app-devops-matta.com</span></div>
-      <div><span class="prompt">$ </span><span class="cmd">curl -I https://florida.app-devops-matta.com</span></div>
+      <div><span class="prompt">$ </span><span class="cmd">curl -I https://norte.app-devops-matta.com</span></div>
+      <div><span class="prompt">$ </span><span class="cmd">curl -I https://sul.app-devops-matta.com</span></div>
     </div>
   </div>
 
